@@ -33,7 +33,7 @@ class AgentNotificationController extends Controller
             ]);
         }
 
-        return view('agent.notifications.index', compact('notifications', 'unreadCount', 'readCount'));
+        return view('agent.notifications.notification', compact('notifications', 'unreadCount', 'readCount'));
     }
 
     public function show(Request $request, DatabaseNotification $notification)
@@ -66,6 +66,7 @@ class AgentNotificationController extends Controller
                 'isDeleted' => true
             ]);
         }
+<<<<<<< HEAD
         
         // For non-deleted notifications, redirect to the appropriate resource
         $ticketId = data_get($data, 'ticket_id');
@@ -149,6 +150,10 @@ class AgentNotificationController extends Controller
     {
         $count = $request->user()->unreadNotifications()->count();
         return response()->json(['unread_count' => $count]);
+=======
+
+        return view('agent.notifications.show', compact('notification', 'data'));
+>>>>>>> b0c0e2c971a5c46df7f3dd5eab2ca3a7e70516f3
     }
 
     public function markAllRead(Request $request)

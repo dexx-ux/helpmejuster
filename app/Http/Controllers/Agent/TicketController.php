@@ -353,10 +353,10 @@ class TicketController extends \App\Http\Controllers\Controller
         $pendingCount = Ticket::where('assigned_to', Auth::id())->whereIn('status', [Ticket::STATUS_PENDING_USER_RESPONSE, Ticket::STATUS_PENDING_ADMIN_APPROVAL])->count();
         $resolvedCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_RESOLVED)->count();
         $closedCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_CLOSED)->count();
-        
+        $canceledCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_CANCELED)->count();
         $categories = Category::all();
 
-        return view('agent.tickets.index', compact('tickets', 'categories', 'totalAssigned', 'openCount', 'inProgressCount', 'pendingCount', 'resolvedCount', 'closedCount'));
+        return view('agent.tickets.index', compact('tickets', 'categories', 'totalAssigned', 'openCount', 'inProgressCount', 'pendingCount', 'resolvedCount', 'closedCount', 'canceledCount'));
     }
 
     public function resolved()
@@ -374,11 +374,12 @@ class TicketController extends \App\Http\Controllers\Controller
         $pendingCount = Ticket::where('assigned_to', Auth::id())->whereIn('status', [Ticket::STATUS_PENDING_USER_RESPONSE, Ticket::STATUS_PENDING_ADMIN_APPROVAL])->count();
         $resolvedCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_RESOLVED)->count();
         $closedCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_CLOSED)->count();
+        $canceledCount = Ticket::where('assigned_to', Auth::id())->where('status', Ticket::STATUS_CANCELED)->count();
         
         // Get categories for filter dropdown
         $categories = Category::all();
 
-        return view('agent.tickets.index', compact('tickets', 'categories', 'totalAssigned', 'openCount', 'inProgressCount', 'pendingCount', 'resolvedCount', 'closedCount'));
+        return view('agent.tickets.index', compact('tickets', 'categories', 'totalAssigned', 'openCount', 'inProgressCount', 'pendingCount', 'resolvedCount', 'closedCount', 'canceledCount'));
     }
 
     public function closed()

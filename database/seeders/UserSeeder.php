@@ -89,6 +89,17 @@ class UserSeeder extends Seeder
                         'status' => 'active',
                         'department_id' => $department->id,
                         'position' => 'Support Agent',
+<<<<<<< HEAD
+=======
+
+                        // IMPORTANT (based on your blade fields)
+                        'specialization' => null,
+                        'skills' => null,
+
+                        'schedule' => json_encode($schedule),
+                        'day_off' => false,
+
+>>>>>>> b0c0e2c971a5c46df7f3dd5eab2ca3a7e70516f3
                         'email_verified_at' => now(),
                     ]
                 );

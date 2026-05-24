@@ -222,7 +222,7 @@
 
                 <li class="pt-2"><div class="border-t border-gray-200 dark:border-gray-800"></div></li>
 
-                <!-- Create New Ticket -->
+                <!-- Create New Ticket Removed - End user only must create tickets
                 <li>
                     <a href="{{ route('agent.tickets.create') }}"
                         class="flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
@@ -239,6 +239,7 @@
                         <span class="text-sm font-medium" :class="{ 'hidden': sidebarCollapsed }">Create Ticket</span>
                     </a>
                 </li>
+                -->
             </ul>
         </div>
 

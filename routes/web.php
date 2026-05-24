@@ -159,11 +159,13 @@ Route::middleware('auth')->group(function () {
 
 
          // ========== USER NOTIFICATIONS ==========
-        Route::get('/notifications', [App\Http\Controllers\User\UserNotificationController::class, 'index'])->name('notifications');
-        Route::get('/notifications/{notification}', [App\Http\Controllers\User\UserNotificationController::class, 'show'])->name('notifications.show');
-        Route::post('/notifications/mark-all-read', [App\Http\Controllers\User\UserNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
-        Route::post('/notifications/delete-all', [App\Http\Controllers\User\UserNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
-
+ Route::get('/notifications', [App\Http\Controllers\User\UserNotificationController::class, 'index'])->name('notifications');
+    Route::get('/notifications/{notification}', [App\Http\Controllers\User\UserNotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\User\UserNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/delete-all', [App\Http\Controllers\User\UserNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
+    Route::post('/notifications/{notification}/mark-read', [App\Http\Controllers\User\UserNotificationController::class, 'markAsRead'])->name('notifications.mark-read-ajax');
+    Route::get('/notifications/unread-count', [App\Http\Controllers\User\UserNotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    
         // ========== USER PROFILE ROUTES ==========
         Route::get('/profile', [App\Http\Controllers\User\ProfileController::class, 'index'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\User\ProfileController::class, 'update'])->name('profile.update');
@@ -187,15 +189,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/in-progress', [App\Http\Controllers\Agent\TicketController::class, 'inProgress'])->name('in-progress');
             Route::get('/resolved', [App\Http\Controllers\Agent\TicketController::class, 'resolved'])->name('resolved');
             Route::get('/closed', [App\Http\Controllers\Agent\TicketController::class, 'closed'])->name('closed');
-            
-            // ========== AGENT NOTIFICATIONS ==========
-            Route::get('/notifications', [App\Http\Controllers\Agent\AgentNotificationController::class, 'index'])->name('notifications');
-            Route::get('/notifications/{notification}', [App\Http\Controllers\Agent\AgentNotificationController::class, 'show'])->name('notifications.show');
-            Route::post('/notifications/mark-all-read', [App\Http\Controllers\Agent\AgentNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
-            Route::post('/notifications/delete-all', [App\Http\Controllers\Agent\AgentNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
-            
-
-            // Parametric routes
+        // Parametric routes
             Route::get('/attachment/{attachment}/download', [App\Http\Controllers\Agent\TicketController::class, 'downloadAttachment'])->name('download');
             Route::post('/{ticket}/comment', [App\Http\Controllers\Agent\TicketController::class, 'comment'])->name('comment');
             Route::patch('/{ticket}/status', [App\Http\Controllers\Agent\TicketController::class, 'updateStatus'])->name('update-status');
@@ -209,6 +203,15 @@ Route::middleware('auth')->group(function () {
             // Index route last
             Route::get('/', [App\Http\Controllers\Agent\TicketController::class, 'index'])->name('index');
         });
+
+                                // ========== AGENT NOTIFICATIONS ==========
+    Route::get('/notifications', [App\Http\Controllers\Agent\AgentNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}', [App\Http\Controllers\Agent\AgentNotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\Agent\AgentNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/delete-all', [App\Http\Controllers\Agent\AgentNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
+    Route::post('/notifications/{notification}/mark-read', [App\Http\Controllers\Agent\AgentNotificationController::class, 'markAsRead'])->name('notifications.mark-read-ajax');
+    Route::get('/notifications/unread-count', [App\Http\Controllers\Agent\AgentNotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+      
 
         // ========== AGENT PROFILE ROUTES ==========
         Route::get('/profile', [AgentProfileController::class, 'index'])->name('profile');
@@ -237,18 +240,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/agents', [AgentUserController::class, 'index'])->name('users.agents');
         
             // ========== ADMIN NOTIFICATIONS ==========
-        Route::get('/notifications', [App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications');
-        Route::get('/notifications/{notification}', [App\Http\Controllers\Admin\AdminNotificationController::class, 'show'])->name('notifications.show');
-        Route::post('/notifications/mark-all-read', [App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
-        Route::post('/notifications/delete-all', [App\Http\Controllers\Admin\AdminNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
-        // Mark single notification as read via AJAX
-        Route::post('/admin/notifications/{id}/mark-read', function ($id) {
-            $notification = auth()->user()->notifications()->find($id);
-            if ($notification && !$notification->read_at) {
-            $notification->markAsRead();}return response()->json(['success' => true]);})->name('admin.notifications.mark-read-ajax');
-
-        // Get unread count for AJAX
-        Route::get('/admin/notifications/unread-count', function () { return response()->json(['unread_count' => auth()->user()->unreadNotifications->count()]);})->name('admin.notifications.unread-count');
+         Route::get('/notifications', [App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications');
+    Route::get('/notifications/{notification}', [App\Http\Controllers\Admin\AdminNotificationController::class, 'show'])->name('notifications.show');
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/delete-all', [App\Http\Controllers\Admin\AdminNotificationController::class, 'deleteAll'])->name('notifications.delete-all');
+    
+    // FIXED: AJAX routes for notifications
+    Route::post('/notifications/{notification}/mark-read', [App\Http\Controllers\Admin\AdminNotificationController::class, 'markAsRead'])
+        ->name('notifications.mark-read-ajax');
+    
+    Route::get('/notifications/unread-count', [App\Http\Controllers\Admin\AdminNotificationController::class, 'unreadCount'])
+        ->name('notifications.unread-count');
 
 
         // Agent Features

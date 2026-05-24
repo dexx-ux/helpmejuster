@@ -61,11 +61,7 @@
                 $resolvedCount = \App\Models\Ticket::where('assigned_to', Auth::id())->where('status', 'resolved')->count();
                 $closedCount = \App\Models\Ticket::where('assigned_to', Auth::id())->where('status', 'closed')->count();
                 $allTicketsCount = \App\Models\Ticket::where('assigned_to', Auth::id())->count();
-                $notificationCount = 0;
-                if (class_exists('App\Models\Notification')) {
-                    $notificationCount = \App\Models\Notification::where('user_id', Auth::id())->where('is_read', false)->count();
-                }
-              
+                $notificationCount = auth()->user()->unreadNotifications()->count();
             @endphp
             <ul class="space-y-1">
                 <!-- Dashboard -->
@@ -87,27 +83,28 @@
                 </li>
 
                 <!-- Notifications -->
-                <li>
-                    <a href="{{ route('agent.notifications') }}"
-                        class="flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
-                        :class="{
-                            'justify-center': sidebarCollapsed,
-                            'justify-start': !sidebarCollapsed,
-                            'bg-blue-600 text-white shadow-md': activeMenu === 'notifications',
-                            'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeMenu !== 'notifications'
-                        }"
-                        @click="setActiveMenu('notifications')"
-                        @mouseenter="sidebarCollapsed ? showTooltip($event, 'Notifications') : null"
-                        @mouseleave="hideTooltip()">
-                        <i class="bi bi-bell text-xl" :class="{ 'text-white': activeMenu === 'notifications' }"></i>
-                        <span class="text-sm font-medium" :class="{ 'hidden': sidebarCollapsed }">Notifications</span>
-                        @if($notificationCount > 0)
-                        <span class="ml-auto inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-200" :class="{ 'hidden': sidebarCollapsed }">{{ $notificationCount }}</span>
-                        @endif
-                    </a>
-                </li>
-
-              
+<li>
+    <a href="{{ route('agent.notifications.index') }}"
+        class="flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
+        :class="{
+            'justify-center': sidebarCollapsed,
+            'justify-start': !sidebarCollapsed,
+            'bg-blue-600 text-white shadow-md': activeMenu === 'notifications',
+            'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeMenu !== 'notifications'
+        }"
+        @click="setActiveMenu('notifications')"
+        @mouseenter="sidebarCollapsed ? showTooltip($event, 'Notifications') : null"
+        @mouseleave="hideTooltip()">
+        <i class="bi bi-bell text-xl" :class="{ 'text-white': activeMenu === 'notifications' }"></i>
+        <span class="text-sm font-medium" :class="{ 'hidden': sidebarCollapsed }">Notifications</span>
+        @php
+            $notificationCount = auth()->user()->unreadNotifications()->count();
+        @endphp
+        @if($notificationCount > 0)
+        <span class="ml-auto inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-200" :class="{ 'hidden': sidebarCollapsed }">{{ $notificationCount }}</span>
+        @endif
+    </a>
+</li>
 
                 <li class="pt-2"><div class="border-t border-gray-200 dark:border-gray-800"></div></li>
 
@@ -367,7 +364,7 @@ function agentSidebarComponent() {
                 this.activeMenu = 'open';
             } else if (currentPath.includes('/agent/tickets')) {
                 this.activeMenu = 'all-tickets';
-            } else if (currentPath.includes('notifications')) {
+            } else if (currentPath.includes('/notifications')) {
                 this.activeMenu = 'notifications';
             } else if (currentPath.includes('/profile')) {
                 this.activeMenu = 'profile';

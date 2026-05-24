@@ -30,7 +30,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'specialization',  // ← Added
         'tickets_handled', // ← Added
         'rating',          // ← Added
-        'skills',          // ← Added
         'last_login_at',   // ← Added
         'last_login_ip',   // ← Added
         'agent_application_id',

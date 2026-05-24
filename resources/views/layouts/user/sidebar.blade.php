@@ -61,10 +61,7 @@
                 $inProgressCount = \App\Models\Ticket::where('user_id', Auth::id())->where('status', 'in_progress')->count();
                 $resolvedCount = \App\Models\Ticket::where('user_id', Auth::id())->where('status', 'resolved')->count();
                 $closedCount = \App\Models\Ticket::where('user_id', Auth::id())->where('status', 'closed')->count();
-                $notificationCount = 0;
-                if (class_exists('App\Models\Notification')) {
-                    $notificationCount = \App\Models\Notification::where('user_id', Auth::id())->where('is_read', false)->count();
-                }
+                $initialUnreadCount = auth()->user()->unreadNotifications()->count();
             @endphp
             <ul class="space-y-1">
                 <!-- Dashboard -->
@@ -85,7 +82,7 @@
                     </a>
                 </li>
 
-                <!-- Notifications -->
+                <!-- Notifications with Dynamic Badge -->
                 <li>
                     <a href="{{ route('user.notifications') }}"
                         class="flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
@@ -100,9 +97,12 @@
                         @mouseleave="hideTooltip()">
                         <i class="bi bi-bell text-xl" :class="{ 'text-white': activeMenu === 'notifications' }"></i>
                         <span class="text-sm font-medium" :class="{ 'hidden': sidebarCollapsed }">Notifications</span>
-                        @if($notificationCount > 0)
-                        <span class="ml-auto inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-200" :class="{ 'hidden': sidebarCollapsed }">{{ $notificationCount }}</span>
-                        @endif
+                        <!-- Dynamic Badge -->
+                        <span x-show="unreadCount > 0" 
+                              x-text="unreadCount > 99 ? '99+' : unreadCount"
+                              class="ml-auto inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[11px] font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-200"
+                              :class="{ 'hidden': sidebarCollapsed }">
+                        </span>
                     </a>
                 </li>
 
@@ -242,115 +242,114 @@
 
                 <li class="pt-2"><div class="border-t border-gray-200 dark:border-gray-800"></div></li>
 
-             <!-- Support & Feedback Dropdown -->
-<li x-data="{ supportOpen: false, buttonRect: null }">
-    <button @click="if (sidebarCollapsed) { 
-                        buttonRect = $event.target.getBoundingClientRect();
-                        supportOpen = !supportOpen; 
-                    } else { 
-                        supportOpen = !supportOpen; 
-                        if(supportOpen) setActiveMenu('support'); 
-                    }"
-            class="w-full flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
-            :class="{
-                'justify-center': sidebarCollapsed,
-                'justify-start': !sidebarCollapsed,
-                'bg-emerald-600 text-white shadow-md': activeMenu === 'support',
-                'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeMenu !== 'support'
-            }"
-            @mouseenter="sidebarCollapsed ? showTooltip($event, 'Support & Feedback') : null"
-            @mouseleave="hideTooltip()">
-        <i class="bi bi-question-circle text-xl" :class="{ 'text-white': activeMenu === 'support' }"></i>
-        <span class="text-sm font-medium flex-1 text-left" :class="{ 'hidden': sidebarCollapsed }">Support & Feedback</span>
-        <i class="bi bi-chevron-down text-xs transition-transform duration-200"
-           :class="{ 'hidden': sidebarCollapsed, 'rotate-180': supportOpen }"></i>
-    </button>
-    
-    <!-- Popup menu for collapsed sidebar - appears as dropdown outside to the right -->
-    <div x-show="supportOpen && sidebarCollapsed" 
-         x-cloak 
-         @click.away="supportOpen = false"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 transform -translate-x-2"
-         x-transition:enter-end="opacity-100 transform translate-x-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 transform translate-x-0"
-         x-transition:leave-end="opacity-0 transform -translate-x-2"
-         class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-[200px]"
-         :style="{ 
-             left: (sidebarCollapsed ? (buttonRect ? buttonRect.right + 8 : 88) + 'px' : 'auto'),
-             top: (buttonRect ? (buttonRect.top + (buttonRect.height / 2) - 40) + 'px' : 'auto')
-         }">
-        
-        <a href="{{ route('user.support') }}"
-            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('faq')">
-            <i class="bi bi-question-lg text-emerald-600 text-base w-5"></i>
-            Help & FAQ
-        </a>
-        <a href="{{ route('user.agents') }}"
-            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('agents')">
-            <i class="bi bi-people text-orange-600 text-base w-5"></i>
-            Our Agents
-        </a>
-        <a href="{{ route('user.ratings') }}"
-            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('ratings')">
-            <i class="bi bi-star text-yellow-600 text-base w-5"></i>
-            My Ratings
-        </a>
-    </div>
-    
-    <!-- Normal dropdown menu for expanded sidebar -->
-    <ul x-show="!sidebarCollapsed && supportOpen" 
-        x-cloak
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 transform -translate-y-2"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        class="ml-6 mt-1 space-y-1">
-        
-        <li>
-            <a href="{{ route('user.support') }}"
-                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
-                :class="{
-                    'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400': activeSubMenu === 'faq',
-                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'faq'
-                }"
-                @click="setActiveMenu('support'); setActiveSubMenu('faq')">
-                <i class="bi bi-question-lg"></i>
-                <span class="text-sm">Help & FAQ</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('user.agents') }}"
-                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
-                :class="{
-                    'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400': activeSubMenu === 'agents',
-                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'agents'
-                }"
-                @click="setActiveMenu('support'); setActiveSubMenu('agents')">
-                <i class="bi bi-people text-lg"></i>
-                <span class="text-sm">Our Agents</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('user.ratings') }}"
-                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
-                :class="{
-                    'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400': activeSubMenu === 'ratings',
-                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'ratings'
-                }"
-                @click="setActiveMenu('support'); setActiveSubMenu('ratings')">
-                <i class="bi bi-star text-lg"></i>
-                <span class="text-sm">My Ratings</span>
-            </a>
-        </li>
-    </ul>
-</li>
+                <!-- Support & Feedback Dropdown -->
+                <li x-data="{ supportOpen: false, buttonRect: null }">
+                    <button @click="if (sidebarCollapsed) { 
+                                        buttonRect = $event.target.getBoundingClientRect();
+                                        supportOpen = !supportOpen; 
+                                    } else { 
+                                        supportOpen = !supportOpen; 
+                                        if(supportOpen) setActiveMenu('support'); 
+                                    }"
+                            class="w-full flex items-center gap-3 p-2.5 rounded-lg transition-all duration-200"
+                            :class="{
+                                'justify-center': sidebarCollapsed,
+                                'justify-start': !sidebarCollapsed,
+                                'bg-emerald-600 text-white shadow-md': activeMenu === 'support',
+                                'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeMenu !== 'support'
+                            }"
+                            @mouseenter="sidebarCollapsed ? showTooltip($event, 'Support & Feedback') : null"
+                            @mouseleave="hideTooltip()">
+                        <i class="bi bi-question-circle text-xl" :class="{ 'text-white': activeMenu === 'support' }"></i>
+                        <span class="text-sm font-medium flex-1 text-left" :class="{ 'hidden': sidebarCollapsed }">Support & Feedback</span>
+                        <i class="bi bi-chevron-down text-xs transition-transform duration-200"
+                           :class="{ 'hidden': sidebarCollapsed, 'rotate-180': supportOpen }"></i>
+                    </button>
+                    
+                    <!-- Popup menu for collapsed sidebar -->
+                    <div x-show="supportOpen && sidebarCollapsed" 
+                         x-cloak 
+                         @click.away="supportOpen = false"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform -translate-x-2"
+                         x-transition:enter-end="opacity-100 transform translate-x-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 transform translate-x-0"
+                         x-transition:leave-end="opacity-0 transform -translate-x-2"
+                         class="fixed bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 min-w-[200px]"
+                         :style="{ 
+                             left: (sidebarCollapsed ? (buttonRect ? buttonRect.right + 8 : 88) + 'px' : 'auto'),
+                             top: (buttonRect ? (buttonRect.top + (buttonRect.height / 2) - 40) + 'px' : 'auto')
+                         }">
+                        
+                        <a href="{{ route('user.support') }}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('faq')">
+                            <i class="bi bi-question-lg text-emerald-600 text-base w-5"></i>
+                            Help & FAQ
+                        </a>
+                        <a href="{{ route('user.agents') }}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('agents')">
+                            <i class="bi bi-people text-orange-600 text-base w-5"></i>
+                            Our Agents
+                        </a>
+                        <a href="{{ route('user.ratings') }}"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            @click="supportOpen = false; setActiveMenu('support'); setActiveSubMenu('ratings')">
+                            <i class="bi bi-star text-yellow-600 text-base w-5"></i>
+                            My Ratings
+                        </a>
+                    </div>
+                    
+                    <!-- Normal dropdown menu for expanded sidebar -->
+                    <ul x-show="!sidebarCollapsed && supportOpen" 
+                        x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform -translate-y-2"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        class="ml-6 mt-1 space-y-1">
+                        
+                        <li>
+                            <a href="{{ route('user.support') }}"
+                                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
+                                :class="{
+                                    'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400': activeSubMenu === 'faq',
+                                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'faq'
+                                }"
+                                @click="setActiveMenu('support'); setActiveSubMenu('faq')">
+                                <i class="bi bi-question-lg"></i>
+                                <span class="text-sm">Help & FAQ</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('user.agents') }}"
+                                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
+                                :class="{
+                                    'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400': activeSubMenu === 'agents',
+                                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'agents'
+                                }"
+                                @click="setActiveMenu('support'); setActiveSubMenu('agents')">
+                                <i class="bi bi-people text-lg"></i>
+                                <span class="text-sm">Our Agents</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('user.ratings') }}"
+                                class="flex items-center gap-3 p-2 rounded-lg transition-all duration-200"
+                                :class="{
+                                    'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400': activeSubMenu === 'ratings',
+                                    'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeSubMenu !== 'ratings'
+                                }"
+                                @click="setActiveMenu('support'); setActiveSubMenu('ratings')">
+                                <i class="bi bi-star text-lg"></i>
+                                <span class="text-sm">My Ratings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
         </div>
-
-        
 
         <!-- User Profile Section with Avatar Dropdown -->
         <div class="border-t border-gray-200 dark:border-gray-800 p-2 relative" x-data="{ profileOpen: false }">
@@ -377,10 +376,6 @@
                    :class="{ 'hidden': sidebarCollapsed, 'rotate-180': profileOpen }"></i>
             </button>
 
-
-
-            
-            
             <!-- Dropdown Menu -->
             <div x-show="profileOpen" 
                  x-cloak 
@@ -431,6 +426,7 @@ function userSidebarComponent() {
         tooltipElement: null,
         isDarkMode: localStorage.getItem('darkMode') === 'true',
         sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        unreadCount: {{ $initialUnreadCount }}, // Set initial count from PHP
         
         init() {
             // Create tooltip element
@@ -457,6 +453,42 @@ function userSidebarComponent() {
             
             // Set active menu based on current route
             this.updateActiveMenuFromRoute();
+            
+            // Fetch updated unread count after page loads
+            setTimeout(() => {
+                this.fetchUnreadCount();
+            }, 500);
+            
+            // Poll for unread count every 30 seconds
+            setInterval(() => {
+                this.fetchUnreadCount();
+            }, 30000);
+        },
+        
+        fetchUnreadCount() {
+            fetch('{{ route("user.notifications.unread-count") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.unread_count !== undefined) {
+                    this.unreadCount = data.unread_count;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching unread count:', error);
+            });
         },
         
         updateActiveMenuFromRoute() {
